@@ -16,7 +16,7 @@ body {
     background: rgba(35, 39, 51, 0.98);
     border-radius: 22px;
     box-shadow: 0 12px 40px 0 rgba(79,140,255,0.18), 0 2px 8px rgba(0,0,0,0.18);
-    padding: 2.5rem 2rem 2rem 2rem;
+    padding: 3rem 3rem 3rem 1rem;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -127,6 +127,7 @@ body {
     font-size: 1.05rem;
     transition: border 0.2s, box-shadow 0.2s;
     outline: none;
+    
 }
 .form-control:focus {
     border: 1.5px solid #4f8cff;
