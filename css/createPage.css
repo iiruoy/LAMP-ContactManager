@@ -1,0 +1,197 @@
+body {
+    background: linear-gradient(135deg, #232733 0%, #181c23 100%);
+    color: #f1f1f1;
+    font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+nav {
+    width: 100vw;
+    background: #050505;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 0.7rem 0;
+    position: relative;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+nav ul {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    margin: 0;
+    padding: 0 2.5rem;
+    width: 100%;
+}
+nav ul li {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #b2becd;
+    letter-spacing: 0.5px;
+    position: relative;
+    transition: color 0.2s;
+}
+nav ul li:first-child {
+    color: #4f8cff;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    margin-right: 2.5rem;
+    background: linear-gradient(90deg, #4f8cff 0%, #2ed573 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+nav ul li a {
+    color: #ffd621;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    position: relative;
+    display: inline-block;
+}
+nav ul li a:hover, nav ul li a:focus {
+    color: #fff;
+    background: linear-gradient(90deg, #4f8cff 0%, #2ed573 100%);
+}
+nav ul li a.active {
+    color: #fff;
+}
+nav ul li a.active::after {
+    content: '';
+    display: block;
+    height: 3px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #4f8cff 0%, #2ed573 100%);
+    width: 100%;
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    transition: width 0.2s;
+}
+
+h1 {
+    margin-top: 2.5rem;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #4f8cff;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px rgba(79,140,255,0.08);
+    text-align: center;
+}
+
+.my-clients-container {
+    background: rgba(35, 39, 51, 0.98);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    padding: 2.2rem 2rem 1.5rem 2rem;
+    width: 100%;
+    max-width: 420px;
+    margin: 2.5rem auto 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.my-clients-container h2 {
+    color: #2ed573;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.my-clients-container form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-row {
+    position: relative;
+    width: 100%;
+    margin-bottom: 0.2rem;
+}
+
+.my-clients-container input[type="text"] {
+    width: 100%;
+    padding: 1.1rem 1rem 0.5rem 1rem;
+    border: 1.5px solid #353a4a;
+    border-radius: 10px;
+    background: #232733;
+    color: #f1f1f1;
+    font-size: 1.05rem;
+    transition: border 0.2s, box-shadow 0.2s;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.my-clients-container input[type="text"]:focus {
+    border: 1.5px solid #4f8cff;
+    background: #232b3a;
+    box-shadow: 0 0 0 2px #4f8cff33;
+}
+
+.my-clients-container label {
+    position: absolute;
+    left: 1.1rem;
+    top: 1.1rem;
+    color: #b2becd;
+    font-size: 1rem;
+    font-weight: 500;
+    pointer-events: none;
+    transition: 0.2s;
+    background: transparent;
+}
+
+.my-clients-container input[type="text"]:focus + label,
+.my-clients-container input[type="text"]:not(:placeholder-shown) + label {
+    top: -0.7rem;
+    left: 0.9rem;
+    font-size: 0.92rem;
+    color: #4f8cff;
+    background: #232733;
+    padding: 0 0.3rem;
+}
+
+.my-clients-container button[type="submit"] {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(90deg, #4f8cff 0%, #2ed573 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    box-shadow: 0 2px 8px rgba(79,140,255,0.15);
+    transition: background 0.2s, transform 0.1s;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.5px;
+}
+
+.my-clients-container button[type="submit"]:hover {
+    background: linear-gradient(90deg, #2ed573 0%, #4f8cff 100%);
+    transform: translateY(-2px) scale(1.01);
+}
+
+@media (max-width: 600px) {
+    .my-clients-container {
+        padding: 1.2rem 0.5rem;
+        max-width: 98vw;
+    }
+    h1 {
+        font-size: 1.3rem;
+    }
+}
