@@ -1,17 +1,23 @@
 <?php
-// signup_login.php
+session_start();
 
-// Initialize variables
-$mode = isset($_POST['mode']) ? $_POST['mode'] : 'login'; // default to login
+// Database connection
+$host = 'localhost';
+$db = 'COP4331';
+$user = 'root';
+$pass = '';
 
-// Shared
+$conn = new mysqli($host, $user, $pass, $db);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+$mode = isset($_POST['mode']) ? $_POST['mode'] : 'login';
 $name = $email = $password = $confirm_password = "";
 $name_err = $email_err = $password_err = $confirm_password_err = $login_err = $success = "";
 
-// Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($mode === 'signup') {
-        // SIGN UP LOGIC
         if (empty(trim($_POST["name"]))) {
             $name_err = "Please enter your name.";
         } else {
@@ -39,12 +45,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $confirm_password_err = "Passwords do not match.";
             }
         }
+
         if (empty($name_err) && empty($email_err) && empty($password_err) && empty($confirm_password_err)) {
-            $success = "Account created successfully! (Add DB logic here)";
-            // Insert into DB here
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $conn->prepare("INSERT INTO userLogins (name, email, password) VALUES (?, ?, ?)");
+            $stmt->bind_param("sss", $name, $email, $hashed_password);
+            if ($stmt->execute()) {
+                $success = "Account created successfully!";
+            } else {
+                $email_err = "Email already exists.";
+            }
+            $stmt->close();
         }
     } else {
-        // LOGIN LOGIC
         if (empty(trim($_POST["email"]))) {
             $email_err = "Please enter your email.";
         } else {
@@ -55,18 +68,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else {
             $password = trim($_POST["password"]);
         }
-        // Dummy check (replace with DB logic)
+
         if (empty($email_err) && empty($password_err)) {
-            if ($email === "user@example.com" && $password === "password123") {
-                header("Location: dashboard.php");
-                exit();
+            $stmt = $conn->prepare("SELECT id, name, password FROM userLogins WHERE email = ?");
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $stmt->store_result();
+
+            if ($stmt->num_rows == 1) {
+                $stmt->bind_result($id, $name, $hashed_password);
+                $stmt->fetch();
+                if (password_verify($password, $hashed_password)) {
+                    $_SESSION['user_id'] = $id;
+                    $_SESSION['user_name'] = $name;
+                    header("Location: dashboard.php");
+                    exit();
+                } else {
+                    $login_err = "Invalid email or password.";
+                }
             } else {
                 $login_err = "Invalid email or password.";
             }
+            $stmt->close();
         }
     }
 }
+$conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
