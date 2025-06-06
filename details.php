@@ -95,7 +95,13 @@ $price = $data['name'] ?? 'N/A';
 </head>
 <body>
 <?php include 'navbar.php'; ?>
-  <h3>Stock Chart</h3>
+  <div class="edit-header">
+    <h3 class="edit-h3-header">Profile Edit</h3>
+    <h3 class="edit-h3-header">User Info</h3>
+    <h3>Details Panel</h3>
+    <h3 class="edit-h3-header-push-right">Next 7 days closing</h3>
+  </div>
+  
   <div class="outer-box-container">
     <div class="box-container-edit-detail-page-right-side">
         <form class="edit-contact-form" action="" method="post">

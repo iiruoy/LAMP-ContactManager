@@ -86,11 +86,12 @@ nav ul li a.active::after {
   width: 75%;
   height: 200px;
   background: linear-gradient(135deg, #172242 0%, #2c3440 100%);
-  border-radius: 0px 8px 8px 8px;
+  border-radius: 8px 8px 8px 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  margin-left: 20px;
 }
 
 .detail-page-content{ 
@@ -118,6 +119,7 @@ nav ul li a.active::after {
   margin-left: 20px;
   display: flex;
   flex-direction: row;
+  
 }
 
 canvas#myChart {
@@ -125,6 +127,7 @@ canvas#myChart {
   border-radius: 12px;
   display: block;
   height: 50%;
+  
 }
 
 body { 
@@ -236,4 +239,24 @@ h3 {
   font-family: 'Open Sans', sans-serif;
   font-weight: 200;
   margin-left: 20px
+}
+
+.edit-header { 
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  align-items: center;
+  margin-top: 7px;
+  margin-bottom: 7px;
+}
+
+.edit-h3-header{ 
+  color: #a0a098;
+  opacity: 0.8;
+  font-size: 14px;
+}
+
+.edit-h3-header-push-right{ 
+  margin-left: auto;
+  margin-right: 13%;
 }
