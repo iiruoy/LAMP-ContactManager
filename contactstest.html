@@ -1,0 +1,157 @@
+<script>
+
+  
+  // URL prefix for all API calls.  Change this only if your backend folder moves.
+  const API = '/LAMPAPI';
+  
+  //hold id after login
+  const userId = sessionStorage.getItem('userId');
+  
+  //cannot reach this page without loging in
+  if (!userId) {                     
+    alert("Please log in");
+    location.href = 'login.php';
+  }
+  
+  // ====================== DOM REFERENCES ======================
+  
+  // Grab the <tbody> where contact <tr>s will be injected
+  const rows = document.getElementById('rows');
+  // Whole modal wrapper (shared by Add and Edit)
+  const modal = document.getElementById('editModal');
+  // inputs
+  const fName      = document.getElementById('fName');
+  const lName      = document.getElementById('lName');
+  const phone      = document.getElementById('phone');
+  const email      = document.getElementById('email');
+  // <h3> inside the modal, so we can swap title between “Add” and “Edit”
+  const modalTitle = document.getElementById('modalTitle');
+  
+ 
+  let currentId = null;
+  
+  
+  
+  // Pull every contact for this user then paint table rows
+  function loadContacts () {
+    fetch(API + '/SearchContacts.php', {          
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, search: '' })// empty search string ⇒ get all
+    })
+    .then(r => r.json())                          // convert HTTP response to JS object
+    .then(d => {
+      rows.innerHTML = '';                        // clear previous rows
+      (d.results || []).forEach(c => {            // loop over each contact returned
+        rows.insertAdjacentHTML('beforeend', `
+          <tr data-id="${c.ID}">
+            <td>${c.FirstName} ${c.LastName}</td>
+            <td>${c.Phone}</td>
+            <td>${c.Email}</td>
+            <td>
+              <!-- “Edit” calls openEdit with current field values -->
+              <button onclick="openEdit(${c.ID},
+                      '${c.FirstName}','${c.LastName}',
+                      '${c.Phone}','${c.Email}')">✎</button>
+              <!-- “Delete” passes only the contact’s ID -->
+              <button onclick="deleteContact(${c.ID})">🗑</button>
+            </td>
+          </tr>`);
+      });
+    });
+  }
+  
+  
+  
+  // Open the modal in “add” mode
+  function openAdd () {
+    currentId = null;                            //new contact
+    modalTitle.textContent = 'Add Contact';      // change header text
+    // Clear all inputs
+    fName.value = lName.value = phone.value = email.value = '';
+    modal.style.display = 'flex';                // show modal
+  }
+  
+ 
+  
+  // Open modal pre-filled with contact data
+  function openEdit (id, fn, ln, ph, em) {
+    currentId = id;                              
+    modalTitle.textContent = 'Edit Contact';     // change header
+    // Pre-fill inputs with existing values
+    fName.value = fn; lName.value = ln; phone.value = ph; email.value = em;
+    modal.style.display = 'flex';
+  }
+  
+  // Simple helper to hide the modal
+  function closeEdit () { modal.style.display = 'none'; }
+  
+ 
+  
+  function saveContact () {
+    const payload = {
+      UserID:    userId,
+      FirstName: fName.value,
+      LastName:  lName.value,
+      Phone:     phone.value,
+      Email:     email.value
+    };
+  
+    // add if nothing, updadate if it exist
+    let url, msg;
+    if (currentId === null) {                    
+      url = API + '/addcontact.php';
+      msg = 'Added';
+    } 
+    else {                                    
+      url = API + '/updatecontact.php';
+      msg = 'Updated';
+      payload.ID = currentId;                    
+    }
+  
+    // Fire the request
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.error === '') {                      // backend signals success
+        alert(msg);
+        closeEdit();
+        loadContacts();                          // refresh table
+      } else {                                   // backend sent an error message
+        alert(d.error);
+      }
+    });
+  }
+  
+
+  //delte
+  function deleteContact (id) {
+    //confirm deletion
+    if (!confirm('Delete this contact?')) return;
+  
+    fetch(API + '/deletecontact.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ UserID: userId, ID: id })
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.error === '') {
+        // Remove the row
+        document.querySelector(`tr[data-id="${id}"]`).remove();
+      } 
+      else {
+        alert(d.error);
+      }
+    });
+  }
+  
+  
+  // Populate the table as soon as the script runs
+  loadContacts();
+  </script>
+  
