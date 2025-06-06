@@ -7,9 +7,10 @@
 	$Email = $inData["Email"];
 	$Phone = $inData["Phone"];
 	$Company = $inData["Company"];
-
+	$contactID = $inData["ID"];
 
 	$conn = mysqli_connect("localhost", "TheBeast", "WeLoveCOP4331", "COP4331");
+	
 	
 	if($conn->connect_error)
 	{
@@ -17,12 +18,11 @@
 	}
 	else
 	{
-		$sql = $conn->prepare("INSERT into Contacts(FirstName, LastName, Phone, Email,UserID,Company)
-		VALUES(?,?,?,?,?,?)");
-		$sql->bind_param("ssssss",$FirstName,$LastName,$Phone,$Email,$userID,$Company);
-		$sql->execute();
-		$sql->close();
-		$conn->close();
+		
+		$sql1 = $conn->prepare("UPDATE Contacts SET FirstName = ?, LastName = ?, Phone = ?, Email = ?, Company = ? WHERE UserID = ? and ID = ?");
+		$sql1->bind_param("sssssss",$FirstName,$LastName,$Phone,$Email,$Company,$userID,$contactID);
+		$sql1->execute();
+
 		returnWithError("");
 	}
 	
