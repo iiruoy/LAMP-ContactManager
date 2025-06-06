@@ -1,0 +1,204 @@
+<!Doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Project1</title>
+
+        <!--styling using css-->
+        <style>
+            /*page styling*/
+            body{
+                margin: 0;
+                background-color: black;
+                font-family: Arial, Sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                flex-direction: column;
+            }
+
+            /*button styling*/
+            .button{
+                background-color: gold;
+                border: none;
+                color: black;
+                padding: 15px 30px;
+                font-size: 16px;
+                margin: 10px;
+                border-radius: 100px; /*nice round look*/
+                cursor: pointer;
+            }
+
+            /*modal overlay background*/
+            .modal{
+                display: none; /*hidden at first*/
+                position: fixed;
+                z-index: 1; /* postiion of it compared to other elements*/
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.8); /*a here controls transparency*/
+                justify-content: center;
+                align-items: center;
+            }
+
+
+            /*modal box*/
+            .modal-content{
+                background-color: #222; /*better than gray, slightly darker*/
+                padding: 20px;
+                border-radius: 10px;
+                color: white;
+                width: 300px;
+                position: relative;
+            }
+
+            /*input group and error message*/
+            .input-group{
+                margin-bottom: 15px;
+                position: relative;
+            }
+
+            /* input field styling*/
+            .input-group input{
+                width: 100%;
+                padding: 10px;
+                border-radius: 5px;
+                border: none;
+                font-size: 14px;
+            }
+
+            /*error message*/
+            .error-text{
+                display: none;
+                color: red;
+                font-size: 15px;
+                margin-top: 5px;
+            }
+
+            /*modal buttons*/
+            .modal-buttons{
+                display: flex;
+                justify-content: space-between;
+            }
+
+            /*close button,  small x*/
+            .close{
+                position: absolute;
+                top: 10px;
+                right: 15px;
+                color: white;
+                font-size: 20px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+
+    <!--now working on the actual page-->
+    <body>
+        <!-- Sign Up button not finished -->
+        <button class= "button" onclick="alert('not yet')">Sign Up</button> 
+
+        <!-- Login button which will summon a modal -->
+        <button class= "button" onclick="openModal()">Login</button>
+
+        <!-- modal container -->
+        <div class="modal" id="loginModal">
+            <div class="modal-content">
+                
+                <!-- x (&times) button to close the modal. span allows its own styling-->
+                 <span class="close" onclick="closeModal()">&times;</span>
+                 <!-- login with level 3 heading, this should be above the input boxes-->
+                 <h3>Login</h3>
+
+                 <!-- Username input and error message-->
+                <div class="input-group">
+                    <input type="text" id="username" placeholder="Username">
+                    <div class = "error-text" id="usernameError">INVALID</div>
+                  </div>
+                <!--password input and error message-->
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="Password">
+                    <div class="error-text" id="passwordError">INVALID</div>
+                </div>
+
+                <!-- modal action buttons (login or cancel)-->
+                <div class="modal-buttons">
+                    <button class="button" onclick="submitLogin()">Login</button>
+                    <button class="button" onclick="closeModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Javascript for modal behavior and validation-->
+        <script>
+            //show modal and clear errors
+            function openModal(){
+                document.getElementById('loginModal').style.display = 'flex';
+                clearErrors();
+            }
+
+            //for clsoing the modal
+            function closeModal(){
+                document.getElementById('loginModal').style.display = 'none';
+            }
+
+            //hide all error message
+            function clearErrors(){
+                document.getElementById('usernameError').style.display = 'none';
+                document.getElementById('passwordError').style.display = 'none';
+            }
+
+            //validate login or send error
+            function submitLogin(){
+                clearErrors(); //this is a new attempt so first clear the errors
+
+                //get the input from user
+                let user = document.getElementById('username').value;
+                let pass = document.getElementById('password').value;
+                let hasError = false; //initialize error
+
+                //base error where username or password is empty
+                if(user=== ""){
+                    document.getElementById('usernameError').style.display = 'block';
+                    hasError = true;
+                }
+                if(pass === ""){
+                    document.getElementById('passwordError').style.display = 'block';
+                    hasError = true;
+                }
+
+                //no input errors
+                if(!hasError){
+                    fetch('http://159.223.115.226/LAMPAPI/Login.php',{
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({login: user, password: pass})
+                    })
+
+                    .then(response=> response.json())
+                    .then(data=>{
+                        if (data.error === ""){
+                            alert("Login successful" +data.firstName+ " "+ data.lastName);
+                            closeModal();
+                            //where to go after login, need a php for this
+                            window.location.href = "welcome.html"; 
+                        }
+                        else{
+                            document.getElementById('usernameError').style.display = 'block';
+                            document.getElementById('passwordError').style.display = 'block';
+                        }
+                    })
+                    .catch(error =>{
+                        console.error("Error:", error);
+                        document.getElementById('usernameError').style.display = 'block';
+                        document.getElementById('passwordError').style.display = 'block';
+                    });
+                }
+
+            }
+        </script>
+    </body>
+</html>
