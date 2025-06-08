@@ -1,90 +1,108 @@
 <?php
 session_start();
-
-// MySQL connection
-$host = 'localhost';
-$db = 'COP4331';
-$user = 'root';
-$pass = '';
-
-$conn = new mysqli($host, $user, $pass, $db);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+$lastContact = $_SESSION['last_contact'] ?? null;
+if ($lastContact) {
+    $contact = json_decode($lastContact, true);
 }
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
+// Remote API base and user context
+$apiBase = "http://159.223.115.226/LAMPAPI";
+$userID = $contact['UserID'];
+
+// Identify contact by ID and optional name
+$id   = $_GET['id']   ?? '';
 $name = $_GET['name'] ?? '';
 $contact = null;
 
-// Handle form submission to update the contact
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $newName = $_POST['name'];
-    $newLastName = $_POST['lastname'];
-    $newEmail = $_POST['email'];
-    $newPhone = $_POST['phonenumber'];
+// 1) Fetch all contacts for this user via search API
+$searchPayload = json_encode(["UserID" => $userID, "search" => ""]);
+$ch = curl_init("$apiBase/searchFirstLast.php");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $searchPayload);
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+$response = curl_exec($ch);
+curl_close($ch);
 
-    $stmt = $conn->prepare("UPDATE Users SET name = ?, lastname = ?, email = ?, phonenumber = ? WHERE name = ?");
-    $stmt->bind_param("sssss", $newName, $newLastName, $newEmail, $newPhone, $name);
-    $stmt->execute();
-    $stmt->close();
+$decodedPayload = json_decode($searchPayload, true);
+$userIdValue = $decodedPayload['UserID'];
+// echo "User ID is: " . $response;    // Extracts just the ID
 
-    // If name changed, update $name so we can reload the correct record
-    $name = $newName;
+
+$data = json_decode($response, true);
+if (!empty($data['results'])) {
+    // 2) Find the specific contact by ID
+    foreach ($data['results'] as $result) {
+        if ($result['ID'] == $id) {
+            $contact = $result;
+            break;
+        }
+    }
 }
 
-// Fetch the updated user info from DB
-$stmt = $conn->prepare("SELECT * FROM Users WHERE name = ?");
-$stmt->bind_param("s", $name);
-$stmt->execute();
-$result = $stmt->get_result();
-$contact = $result->fetch_assoc();
-$stmt->close();
+// 3) Handle update via API on form POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Build payload matching API expectations
+    $updatePayload = [
+        "FirstName" => $_POST['FirstName'],
+        "LastName"  => $_POST['LastName'],
+        "Email"     => $_POST['Email'],
+        "Phone"     => $_POST['Phone'],
+        "Company"   => $_POST['Company'] ?? $contact['Company'],
+        "UserID"    => $userID,
+        "ID"        => $_POST['ID']
+    ];
 
-$company = $contact['company']; 
+    // Call the update endpoint (ensure correct filename casing)
+    $ch = curl_init("$apiBase/updatecontact.php");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($updatePayload));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    $updateResp = curl_exec($ch);
+    curl_close($ch);
+
+    // Redirect back to details view of this contact
+    header("Location: details.php?id=" . urlencode($updatePayload['ID']) . "&name=" . urlencode($updatePayload['FirstName']));
+    exit;
+}
+
+$company = $contact['Company'] ?? '';
 
 require_once 'config.php';
 $url = "https://api.twelvedata.com/quote?symbol=". urlencode($company) . "&apikey=$apiKey";
-
-
 $response = file_get_contents($url);
 $data = json_decode($response, true);
 
-$timeIntervalUrl = "https://api.twelvedata.com/time_series?symbol=".urlencode($company)."&interval=1day&outputsize=30&apikey=$apiKey";
-$timeBarIntervalUrl = "https://api.twelvedata.com/time_series?symbol=".urlencode($company)."&interval=1day&outputsize=7&apikey=$apiKey";
+// Chart Data
+$timeIntervalUrl = "https://api.twelvedata.com/time_series?symbol=" . urlencode($company) . "&interval=1day&outputsize=30&apikey=$apiKey";
+$barIntervalUrl = "https://api.twelvedata.com/time_series?symbol=" . urlencode($company) . "&interval=1day&outputsize=7&apikey=$apiKey";
 
-$timeIntervaeralResponse = file_get_contents($timeIntervalUrl);
-$timeData = json_decode($timeIntervaeralResponse, true);
+$timeData = json_decode(file_get_contents($timeIntervalUrl), true);
+$barData = json_decode(file_get_contents($barIntervalUrl), true);
 
-$stockPrice = [];
-$stockLabel = [];
+$stockPrice = $stockLabel = $stockPriceBar = $stockLabelBar = [];
 
-if(!empty($timeData['values'])){ 
-  foreach (array_reverse($timeData['values']) as $stockPoint){ 
-    $stockLabel[] = $stockPoint['datetime'];
-    $stockPrice[] = $stockPoint['close'];
-  }
+if (!empty($timeData['values'])) {
+    foreach (array_reverse($timeData['values']) as $point) {
+        $stockLabel[] = $point['datetime'];
+        $stockPrice[] = $point['close'];
+    }
 }
 
-$timeBarIntervalUrlResponse = file_get_contents($timeBarIntervalUrl); 
-$barTimeData = json_decode($timeBarIntervalUrlResponse, true);
-
-$stockPriceBar = [];
-$stockLabelBar = [];
-
-if(!empty($barTimeData['values'])){ 
-  foreach (array_reverse($barTimeData['values']) as $stockPointBar){ 
-    $stockLabelBar[] = $stockPointBar['datetime'];
-    $stockPriceBar[] = $stockPointBar['close'];
-  }
+if (!empty($barData['values'])) {
+    foreach (array_reverse($barData['values']) as $pointBar) {
+        $stockLabelBar[] = $pointBar['datetime'];
+        $stockPriceBar[] = $pointBar['close'];
+    }
 }
 
-echo "<pre>";
-// print_r($data);
-// print_r($timeData);
-
-// print_r($contacts);
-echo "</pre>";
-$price = $data['name'] ?? 'N/A'; 
+$price = $data['name'] ?? 'N/A';
 ?>
+
 
 <!DOCTYPE html>
 <html>
@@ -105,20 +123,21 @@ $price = $data['name'] ?? 'N/A';
   <div class="outer-box-container">
     <div class="box-container-edit-detail-page-right-side">
         <form class="edit-contact-form" action="" method="post">
+          <input type="hidden" name="ID" value="<?php echo htmlspecialchars($contact['ID']); ?>">
           <div class="form-row">
-            <input type="text" name="name" id="editName" placeholder=" " value="<?php echo htmlspecialchars($contact['name']); ?>">
+            <input type="text" name="FirstName" id="editName" placeholder=" " value="<?php echo htmlspecialchars($contact['FirstName']); ?>">
             <label for="editName">First Name</label>
           </div>
           <div class="form-row">
-            <input type="text" name="lastname" id="editLastName" placeholder=" " value="<?php echo htmlspecialchars($contact['lastname']); ?>">
+            <input type="text" name="LastName" id="editLastName" placeholder=" " value="<?php echo htmlspecialchars($contact['LastName']); ?>">
             <label for="editLastName">Last Name</label>
           </div>
           <div class="form-row">
-            <input type="email" name="email" id="editEmail" placeholder=" " value="<?php echo htmlspecialchars($contact['email']); ?>">
+            <input type="email" name="Email" id="editEmail" placeholder=" " value="<?php echo htmlspecialchars($contact['Email']); ?>">
             <label for="editEmail">Email</label>
           </div>
           <div class="form-row">
-            <input type="text" name="phonenumber" id="editPhone" placeholder=" " value="<?php echo htmlspecialchars($contact['phonenumber']); ?>">
+            <input type="text" name="Phone" id="editPhone" placeholder=" " value="<?php echo htmlspecialchars($contact['Phone']); ?>">
             <label for="editPhone">Phone Number</label>
           </div>
           <button type="submit" class="btn-save">Save Changes</button>
@@ -176,7 +195,7 @@ $price = $data['name'] ?? 'N/A';
   </div>
   <h3>Stock Chart</h3>
   <div class="chart-container">
-        <canvas id="myChart" width="580" height="250"></canvas>
+    <canvas id="myChart" width="960" height="250"></canvas>
         <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
         <script>
           const labels = <?php echo json_encode($stockLabel); ?>;
@@ -185,68 +204,39 @@ $price = $data['name'] ?? 'N/A';
           const ctx = document.getElementById('myChart').getContext('2d');
   
           new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: labels,
-    datasets: [{
-      label: '30 Day Closing Price',
-      data: prices,
-      borderColor: 'rgb(33, 85, 254)',
-      borderWidth: 2,
-      fill: true, 
-    }]
-  },
-  options: {
-    scales: {
-      x: {
-        ticks: {
-          display: false // Hide x-axis numbers
-        },
-        grid: {
-          display: false // Optional: hide x-axis grid lines
-        }
-      },
-      y: {
-        ticks: {
-          display: true // Hide y-axis numbers
-        },
-        grid: {
-          display: false // Optional: hide y-axis grid lines
-        }
-      }
-    }
-  }
-});
-
+            type: 'line',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: '30 Day Closing Price',
+                data: prices,
+                borderColor: 'rgb(33, 85, 254)',
+                borderWidth: 2,
+                fill: true, 
+              }]
+            },
+            options: {
+              scales: {
+                x: {
+                  ticks: {
+                    display: false // Hide x-axis numbers
+                  },
+                  grid: {
+                    display: false // Optional: hide x-axis grid lines
+                  }
+                },
+                y: {
+                  ticks: {
+                    display: true // Hide y-axis numbers
+                  },
+                  grid: {
+                    display: false // Optional: hide y-axis grid lines
+                  }
+                }
+              }
+            }
+          });
         </script>
-        <div class="scroll-container">
-          <div class="content-from-api-container">
-          <h1>hello</h1>
-          <h1>hello</h1>
-          <h1>hello</h1>
-        </div>
-        <div class="content-from-api-container">
-          <h1>hello</h1>
-          <h1>hello</h1>
-          <h1>hello</h1>
-        </div>
-        <div class="content-from-api-container">
-          <h1>hello</h1>
-          <h1>hello</h1>
-          <h1>hello</h1>
-        </div>
-        <div class="content-from-api-container">
-          <h1>hello</h1>
-          <h1>hello</h1>
-          <h1>hello</h1>
-        </div>
-        <div class="content-from-api-container">
-          <h1>hello</h1>
-          <h1>hello</h1>
-          <h1>hello</h1>
-        </div>
-        </div>
-        
     </div>
   
 

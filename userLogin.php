@@ -1,128 +1,77 @@
-<?php
-session_start();
-
-// Database connection
-$host = 'localhost';
-$db = 'COP4331';
-$user = 'root';
-$pass = '';
-
-$conn = new mysqli($host, $user, $pass, $db);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-$mode = isset($_POST['mode']) ? $_POST['mode'] : 'login';
-$name = $email = $password = $confirm_password = "";
-$name_err = $email_err = $password_err = $confirm_password_err = $login_err = $success = "";
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if ($mode === 'signup') {
-        if (empty(trim($_POST["name"]))) {
-            $name_err = "Please enter your name.";
-        } else {
-            $name = trim($_POST["name"]);
-        }
-        if (empty(trim($_POST["email"]))) {
-            $email_err = "Please enter your email.";
-        } elseif (!filter_var($_POST["email"], FILTER_VALIDATE_EMAIL)) {
-            $email_err = "Invalid email format.";
-        } else {
-            $email = trim($_POST["email"]);
-        }
-        if (empty(trim($_POST["password"]))) {
-            $password_err = "Please enter a password.";
-        } elseif (strlen(trim($_POST["password"])) < 6) {
-            $password_err = "Password must have at least 6 characters.";
-        } else {
-            $password = trim($_POST["password"]);
-        }
-        if (empty(trim($_POST["confirm_password"]))) {
-            $confirm_password_err = "Please confirm your password.";
-        } else {
-            $confirm_password = trim($_POST["confirm_password"]);
-            if ($password !== $confirm_password) {
-                $confirm_password_err = "Passwords do not match.";
-            }
-        }
-
-        if (empty($name_err) && empty($email_err) && empty($password_err) && empty($confirm_password_err)) {
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("INSERT INTO userLogins (name, email, password) VALUES (?, ?, ?)");
-            $stmt->bind_param("sss", $name, $email, $hashed_password);
-            if ($stmt->execute()) {
-                $success = "Account created successfully!";
-            } else {
-                $email_err = "Email already exists.";
-            }
-            $stmt->close();
-        }
-    } else {
-        if (empty(trim($_POST["email"]))) {
-            $email_err = "Please enter your email.";
-        } else {
-            $email = trim($_POST["email"]);
-        }
-        if (empty(trim($_POST["password"]))) {
-            $password_err = "Please enter your password.";
-        } else {
-            $password = trim($_POST["password"]);
-        }
-
-        if (empty($email_err) && empty($password_err)) {
-            $stmt = $conn->prepare("SELECT id, name, password FROM userLogins WHERE email = ?");
-            $stmt->bind_param("s", $email);
-            $stmt->execute();
-            $stmt->store_result();
-
-            if ($stmt->num_rows == 1) {
-                $stmt->bind_result($id, $name, $hashed_password);
-                $stmt->fetch();
-                if (password_verify($password, $hashed_password)) {
-                    $_SESSION['user_id'] = $id;
-                    $_SESSION['user_name'] = $name;
-                    header("Location: dashboard.php");
-                    exit();
-                } else {
-                    $login_err = "Invalid email or password.";
-                }
-            } else {
-                $login_err = "Invalid email or password.";
-            }
-            $stmt->close();
-        }
-    }
-}
-$conn->close();
-?>
-
-
+<?php session_start(); ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Stock Auth | Sign Up & Log In</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/signup.css">
-    <script>
-        function toggleMode(mode) {
-            document.getElementById('mode').value = mode;
-            document.getElementById('auth-title').innerText = (mode === 'signup') ? 'Sign Up' : 'Log In';
-            document.getElementById('signup-fields').style.display = (mode === 'signup') ? 'block' : 'none';
-            document.getElementById('signup-fields-confirm').style.display = (mode === 'signup') ? 'block' : 'none';
-            var btns = document.getElementsByClassName('auth-toggle-btn');
-            btns[0].classList.toggle('active', mode === 'login');
-            btns[1].classList.toggle('active', mode === 'signup');
+  <meta charset="UTF-8">
+  <title>Stock Auth | Sign Up & Log In</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <link rel="stylesheet" href="css/signup.css">
+  <script>
+    function toggleMode(m) {
+      document.getElementById('mode').value = m;
+      document.getElementById('auth-title').innerText = m === 'signup' ? 'Sign Up' : 'Log In';
+      document.getElementById('signup-fields').style.display = m === 'signup' ? 'block' : 'none';
+      document.getElementById('signup-fields-confirm').style.display = m === 'signup' ? 'block' : 'none';
+      document.querySelectorAll('.auth-toggle-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', (i === 0 && m === 'login') || (i === 1 && m === 'signup'));
+      });
+    }
+
+    window.onload = () => toggleMode('login');
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const mode = document.getElementById('mode').value;
+      const email = document.querySelector('[name="email"]').value.trim();
+      const password = document.querySelector('[name="password"]').value.trim();
+
+      let payload = { login: email, password };
+
+      if (mode === 'signup') {
+        const name = document.querySelector('[name="name"]').value.trim();
+        const confirmPassword = document.querySelector('[name="confirm_password"]').value.trim();
+        if (password !== confirmPassword) {
+          alert("Passwords do not match.");
+          return;
         }
-        window.onload = function() {
-            toggleMode('<?php echo $mode; ?>');
-        }
-    </script>
+        const [first, last] = name.split(' ');
+        payload = {
+          FirstName: first || '',
+          LastName: last || '',
+          Email: email,
+          Phone: '',
+          Company: '',
+          login: email,
+          password: password
+        };
+      }
+
+      const res = await fetch('/proxy.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await res.json();
+
+      if (result.error) {
+        alert('Error: ' + result.error);
+      } else if (mode === 'login') {
+        console.log("Login response:", result);
+        sessionStorage.setItem('user_id', result.id);
+        sessionStorage.setItem('user_name', result.firstName);
+        window.location.href = 'dashboard.php';
+      } else {
+        alert("Account created. Please log in.");
+        toggleMode('login');
+      }
+    }
+  </script>
 </head>
 <body>
-    <div class="auth-3d-container">
-        <div class="auth-card" id="authCard">
-            <div class="ticker-tape">
+  <div class="auth-3d-container">
+    <div class="auth-card">
+         <div class="ticker-tape">
                 <div class="ticker-track" id="tickerTrack">
                     <span>AAPL 192.32 ▲</span>
                     <span>GOOG 2831.12 ▼</span>
@@ -140,46 +89,38 @@ $conn->close();
                     <animate attributeName="cy" values="40;8" dur="3s" repeatCount="indefinite"/>
                 </circle>
             </svg>
-            <div class="auth-toggle">
-                <button type="button" class="auth-toggle-btn<?php echo ($mode === 'login') ? ' active' : ''; ?>" onclick="toggleMode('login')">Log In</button>
-                <button type="button" class="auth-toggle-btn<?php echo ($mode === 'signup') ? ' active' : ''; ?>" onclick="toggleMode('signup')">Sign Up</button>
-            </div>
-            <h2 id="auth-title"><?php echo ($mode === 'signup') ? 'Sign Up' : 'Log In'; ?></h2>
-            <?php if ($success): ?>
-                <div class="success"><?php echo $success; ?></div>
-            <?php endif; ?>
-            <?php if ($login_err && $mode === 'login'): ?>
-                <div class="error"><?php echo $login_err; ?></div>
-            <?php endif; ?>
-            <form action="" method="post" autocomplete="off" style="width:100%;z-index:3;">
-                <input type="hidden" name="mode" id="mode" value="<?php echo $mode; ?>">
-                <div id="signup-fields" style="display:<?php echo ($mode === 'signup') ? 'block' : 'none'; ?>;">
-                    <div class="form-group">
-                        <input type="text" name="name" class="form-control" placeholder=" " value="<?php echo htmlspecialchars($name); ?>" id="nameInput">
-                        <label for="nameInput">Name</label>
-                        <?php if ($name_err): ?><div class="error"><?php echo $name_err; ?></div><?php endif; ?>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <input type="email" name="email" class="form-control" placeholder=" " value="<?php echo htmlspecialchars($email); ?>" id="emailInput">
-                    <label for="emailInput">Email</label>
-                    <?php if ($email_err): ?><div class="error"><?php echo $email_err; ?></div><?php endif; ?>
-                </div>
-                <div class="form-group">
-                    <input type="password" name="password" class="form-control" placeholder=" " id="passwordInput">
-                    <label for="passwordInput">Password</label>
-                    <?php if ($password_err): ?><div class="error"><?php echo $password_err; ?></div><?php endif; ?>
-                </div>
-                <div id="signup-fields-confirm" style="display:<?php echo ($mode === 'signup') ? 'block' : 'none'; ?>;">
-                    <div class="form-group">
-                        <input type="password" name="confirm_password" class="form-control" placeholder=" " id="confirmPasswordInput">
-                        <label for="confirmPasswordInput">Confirm Password</label>
-                        <?php if ($confirm_password_err): ?><div class="error"><?php echo $confirm_password_err; ?></div><?php endif; ?>
-                    </div>
-                </div>
-                <button type="submit" class="btn-primary" id="submitBtn"><?php echo ($mode === 'signup') ? 'Create Account' : 'Log In'; ?></button>
-            </form>
+      <div class="auth-toggle">
+        <button type="button" class="auth-toggle-btn" onclick="toggleMode('login')">Log In</button>
+        <button type="button" class="auth-toggle-btn" onclick="toggleMode('signup')">Sign Up</button>
+      </div>
+      <h2 id="auth-title">Log In</h2>
+      <form id="authForm" autocomplete="off" onsubmit="handleSubmit(event)">
+        <input type="hidden" name="mode" id="mode" value="login">
+        <div id="signup-fields" style="display:none">
+          <div class="form-group">
+            <input type="text" name="name" class="form-control" placeholder=" ">
+            <label>Name</label>
+          </div>
         </div>
+        <div class="form-group">
+          <input type="email" name="email" class="form-control" placeholder=" ">
+          <label>Email</label>
+        </div>
+        <div class="form-group">
+          <input type="password" name="password" class="form-control" placeholder=" ">
+          <label>Password</label>
+        </div>
+        <div id="signup-fields-confirm" style="display:none">
+          <div class="form-group">
+            <input type="password" name="confirm_password" class="form-control" placeholder=" ">
+            <label>Confirm Password</label>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary">
+          Submit
+        </button>
+      </form>
     </div>
+  </div>
 </body>
-</html> 
+</html>

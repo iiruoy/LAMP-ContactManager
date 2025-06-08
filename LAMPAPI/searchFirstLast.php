@@ -28,7 +28,7 @@
 				$searchResults .= ",";
 			}
 			$searchCount++;
-			$searchResults .= '{"ID" : "' . $row["ID"] . '", "FirstName" : "' . $row["FirstName"] . '", "LastName" : "' . $row["LastName"] . '", "Email" : "' . $row["Email"] . '", "Phone" : "' . $row["Phone"] . '", "Company" : "' . $row["Company"] . '"}';
+			$searchResults .= '{"ID" : "' . $row["ID"] . '", "FirstName" : "' . $row["FirstName"] . '", "LastName" : "' . $row["LastName"] . '", "Email" : "' . $row["Email"] . '", "Phone" : "' . $row["Phone"] . '", "Company" : "' . $row["Company"] . '", "UserId" : "' . $userID . '"}';
 		}
 		
 		if( $searchCount == 0 )

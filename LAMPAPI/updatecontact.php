@@ -1,7 +1,7 @@
 <?php
 	$inData = getRequestInfo();
 	
-	$userID = $inData["UserID"];
+	#$userID = $inData["UserID"];
 	$FirstName = $inData["FirstName"];
 	$LastName = $inData["LastName"];
 	$Email = $inData["Email"];
@@ -19,8 +19,8 @@
 	else
 	{
 		
-		$sql1 = $conn->prepare("UPDATE Contacts SET FirstName = ?, LastName = ?, Phone = ?, Email = ?, Company = ? WHERE UserID = ? and ID = ?");
-		$sql1->bind_param("sssssss",$FirstName,$LastName,$Phone,$Email,$Company,$userID,$contactID);
+		$sql1 = $conn->prepare("UPDATE Contacts SET FirstName = ?, LastName = ?, Phone = ?, Email = ?, Company = ? WHERE ID = ?");
+		$sql1->bind_param("ssssss",$FirstName,$LastName,$Phone,$Email,$Company,$contactID);
 		$sql1->execute();
 
 		returnWithError("");

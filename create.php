@@ -47,27 +47,47 @@ document.getElementById("contactForm").addEventListener("submit", async function
   e.preventDefault();
 
   const data = {
-    name: document.getElementById("nameInput").value,
-    lastname: document.getElementById("lastnameInput").value,
-    email: document.getElementById("emailInput").value,
-    phonenumber: document.getElementById("phoneInput").value,
-    company: document.getElementById("companyInput").value,
+    UserID: sessionStorage.getItem("user_id"),// You'll need to get this from your login system
+    FirstName: document.getElementById("nameInput").value,
+    LastName: document.getElementById("lastnameInput").value,
+    Email: document.getElementById("emailInput").value,
+    Phone: document.getElementById("phoneInput").value,
+    Company: document.getElementById("companyInput").value,
   };
 
-  const response = await fetch("http://159.223.115.226/LAMP-ContactManager/LAMPAPI/addcontact.php", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(data)
-  });
+  console.log("Sending data:", data);
 
-  const result = await response.json();
-  if (result.error === "") {
-    alert("Contact saved successfully!");
-    location.reload();
-  } else {
-    alert("Error: " + result.error);
+  try {
+    const response = await fetch("/proxy.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(data)
+    });
+
+    console.log("Response status:", response.status);
+    const responseText = await response.text();
+    console.log("Raw response:", responseText);
+
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (e) {
+      console.error("Failed to parse JSON:", e);
+      throw new Error("Invalid JSON response from server");
+    }
+
+    if (result.error === "") {
+      alert("Contact saved successfully!");
+      location.reload();
+    } else {
+      alert("Error: " + result.error);
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    alert("Error saving contact: " + error.message);
   }
 });
 </script>

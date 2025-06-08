@@ -114,12 +114,12 @@ nav ul li a.active::after {
 
 .chart-container { 
   /* background: linear-gradient(135deg, #232733 0%, #181c23 100%); */
-  height: 55%;
+  height: 50%;
   margin-top: 15px;
   margin-left: 20px;
   display: flex;
   flex-direction: row;
-  
+  width: 98%;
 }
 
 canvas#myChart {
@@ -147,12 +147,14 @@ body {
 
 .scroll-container{ 
   overflow-y: auto;
-  margin-left: auto;
+  margin-right: auto;
   width: 25%;
+  /* position: absolute; */
+  margin-left: 650px;
 }
 
 .form-row { 
-  position: relative;
+  /* position: relative; */
   flex: 1 1 18%;
   min-width: 140px;
   margin-bottom: 0;
