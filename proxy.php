@@ -6,19 +6,20 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 // Set CORS headers
-header("Access-Control-Allow-Origin: http://localhost:8000"); // Adjust if needed
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-header("Access-Control-Max-Age: 86400");
+// header('Access-Control-Allow-Origin: http://cop4331group7.xyz');
+// header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+// header('Access-Control-Allow-Headers: Content-Type');
+// header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: http://cop4331group7.xyz');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+header('Content-Type: application/json');
 
-// Handle preflight OPTIONS request
+// Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
-
-// Set content type
-header("Content-Type: application/json");
 
 // Determine which endpoint to hit
 $method = $_SERVER['REQUEST_METHOD'];

@@ -46,7 +46,7 @@
         };
       }
 
-      const res = await fetch('http://159.223.115.226/proxy.php', {
+      const res = await fetch('proxy.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
