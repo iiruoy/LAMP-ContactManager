@@ -25,25 +25,28 @@ $method = $_SERVER['REQUEST_METHOD'];
 $requestBody = file_get_contents('php://input');
 
 switch ($method) {
+    case 'GET':
+        $url = "http://159.223.115.226/LAMPAPI/getcontacts.php";
+        break;
     case 'POST':
-    $decodedInput = json_decode($requestBody, true);
-    
-    if (isset($decodedInput['login']) && isset($decodedInput['password']) && count($decodedInput) === 2) {
-    // This is a login request
-        $url = "http://159.223.115.226/LAMPAPI/login.php";
-    } elseif (isset($decodedInput['login']) && isset($decodedInput['password'])) {
-        // This is a signup request
-        $url = "http://159.223.115.226/LAMPAPI/register.php";
-    } elseif (isset($decodedInput['search'])) {
-        $url = "http://159.223.115.226/LAMPAPI/searchFirstLast.php";
-    } elseif (isset($decodedInput['ID']) && isset($decodedInput['UserID'])) {
-        $url = "http://159.223.115.226/LAMPAPI/deletecontact.php";
-    } elseif (isset($decodedInput['ID'])) {
-        $url = "http://159.223.115.226/LAMPAPI/updateContact.php";
-    } else {
-        $url = "http://159.223.115.226/LAMPAPI/addcontact.php";
-    }
-    break;
+        $decodedInput = json_decode($requestBody, true);
+        
+        if (isset($decodedInput['login']) && isset($decodedInput['password']) && count($decodedInput) === 2) {
+            // This is a login request
+            $url = "http://159.223.115.226/LAMP-ContactManager/LAMPAPI/login.php";
+        } elseif (isset($decodedInput['login']) && isset($decodedInput['password'])) {
+            // This is a signup request
+            $url = "http://159.223.115.226/LAMPAPI/register.php";
+        } elseif (isset($decodedInput['search'])) {
+            $url = "http://159.223.115.226/LAMPAPI/searchFirstLast.php";
+        } elseif (isset($decodedInput['ID']) && isset($decodedInput['UserID'])) {
+            $url = "http://159.223.115.226/LAMPAPI/deletecontact.php";
+        } elseif (isset($decodedInput['ID'])) {
+            $url = "http://159.223.115.226/LAMPAPI/updateContact.php";
+        } else {
+            $url = "http://159.223.115.226/LAMPAPI/addcontact.php";
+        }
+        break;
 
 
     default:
