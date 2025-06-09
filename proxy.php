@@ -33,7 +33,7 @@ switch ($method) {
         
         if (isset($decodedInput['login']) && isset($decodedInput['password']) && count($decodedInput) === 2) {
             // This is a login request
-            $url = "http://159.223.115.226/LAMP-ContactManager/LAMPAPI/login.php";
+            $url = "http://159.223.115.226/LAMPAPI/login.php";
         } elseif (isset($decodedInput['login']) && isset($decodedInput['password'])) {
             // This is a signup request
             $url = "http://159.223.115.226/LAMPAPI/register.php";
