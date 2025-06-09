@@ -53,7 +53,7 @@ $Company = $inData["Company"];
 
 // Connect to database
 try {
-    $conn = new mysqli("159.223.115.226", "TheBeast", "WeLoveCOP4331", "COP4331");
+    $conn = new mysqli("localhost", "TheBeast", "WeLoveCOP4331", "COP4331");
     
     if ($conn->connect_error) {
         handleError("Database connection failed: " . $conn->connect_error);
